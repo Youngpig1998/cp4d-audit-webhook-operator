@@ -1,0 +1,548 @@
+//Firstly, we create the network policies
+	if err = createNetworkPolicyIfNotExists(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create networkpolicy error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+	log.Info("networkpolicy created")
+
+
+	//Secondly,We create the issuer
+	if err = createIssuerIfNotExists(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create issuer error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+	log.Info("issuer created")
+
+
+	//Then We create the certificate
+	if err = createCertificateIfNotExists(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create certificate error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+	log.Info("certificate created")
+
+
+	//After that ,set reference to secret
+	if err = setReferenceToSecret(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create Secret error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+	log.Info("secret set successfully")
+
+
+
+	// Then we create the configmap
+	if err = createConfigmapIfNotExists(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create configmap error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+
+	// Further, we create the service
+	if err = createServiceIfNotExists(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create Service error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+
+	// After that, we create the deployment
+	if err = createDeployment(ctx, r, instance,req); err != nil {
+		log.Error(err, "Create Deployment error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+
+	// Finally, we create the MutatingWebhookConfiguration
+	if err = createMutatingWebhookConfigurationIfNotExists(ctx, r, instance, req); err != nil {
+		log.Error(err, "Create Mutatingwebhookconfiguration error")
+		// Return error message
+		return ctrl.Result{}, err
+	}
+
+
+
+
+
+
+
+//////////////// Create Certificate
+func createNetworkPolicyIfNotExists(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "createNetworkPolicy")
+
+	networkPolicy := &networkpolicy.NetworkPolicy{}
+
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-networkpolicy"},networkPolicy)
+
+	// No action is needed if the issuer is normal
+	if err == nil {
+		log.Info("networkPolicy exists")
+		return nil
+	}
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query networkPolicy error")
+		return err
+	}
+
+	// Instantialize the data structure
+	networkPolicy = operator.NetworkPolicy(webHook)
+
+	// Critical step
+	// The reference guarantees that service will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook,networkPolicy, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create certificate
+	log.Info("start create networkPolicy")
+	if err := r.Create(ctx,networkPolicy); err != nil {
+		log.Error(err, "create certificate error")
+		return err
+	}
+
+	log.Info("create networkPolicy success")
+
+	return nil
+}
+
+
+
+//////////////// Create Issuer
+func createIssuerIfNotExists(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "createIssuer")
+
+	issuer := &certmanagerv1.Issuer{}
+
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "selfsigned-issuer"},issuer)
+
+	// No action is needed if the issuer is normal
+	if err == nil {
+		log.Info("issuer exists")
+		return nil
+	}
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query issuer error")
+		return err
+	}
+
+	// Instantialize the data structure
+	issuer = operator.Issuer()
+
+	// Critical step
+	// The reference guarantees that service will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook, issuer, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create issuer
+	log.Info("start create issuer")
+	if err := r.Create(ctx,issuer); err != nil {
+		log.Error(err, "create issuer error")
+		return err
+	}
+
+	log.Info("create issuer success")
+
+	return nil
+}
+
+
+//////////////// Create Certificate
+func createCertificateIfNotExists(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "createCertificate")
+
+	certificate := &certmanagerv1.Certificate{}
+
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "serving-cert"},certificate)
+
+	// No action is needed if the issuer is normal
+	if err == nil {
+		log.Info("certificate exists")
+		return nil
+	}
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query certificate error")
+		return err
+	}
+
+	// Instantialize the data structure
+	certificate = operator.Certificate(webHook)
+
+	// Critical step
+	// The reference guarantees that service will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook,certificate, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create certificate
+	log.Info("start create certificate")
+	if err := r.Create(ctx,certificate); err != nil {
+		log.Error(err, "create certificate error")
+		return err
+	}
+
+	log.Info("create certificate success")
+
+	return nil
+}
+
+
+
+//Set Reference to the secret
+func setReferenceToSecret(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "Secret")
+	log.Info("start to set referenceto the secret")
+
+
+
+	//Wait For certmanager creating secret
+	time.Sleep(5000 * time.Millisecond)
+
+
+
+	secret := &corev1.Secret{}
+
+
+	// Query secrets through client tools
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-tls-secret"}, secret)
+
+
+	//If the secret exists
+	if err == nil {
+		log.Info("secret exists")
+		// Critical step
+		log.Info("set reference")
+
+
+		//Save the secret's data
+		var secretData = secret.Data
+
+
+		//Delete the original secret
+		if err := r.Delete(ctx, secret); err != nil {
+			log.Error(err, "delete secret error")
+			return err
+		}
+
+
+		// Query secrets again through client tools
+		err = r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-tls-secret"}, secret)
+
+
+		// If there is no error in the query result, it proves that the secret is normal, and nothing is done
+		if err == nil {
+			log.Info("secret exists")
+		}
+
+		// If the error is not NotFound, return an error
+		if !errors.IsNotFound(err) {
+			log.Error(err, "query secret error")
+		}
+
+
+		// Instantiate a data structure
+		secret = operator.Secret(webHook,secretData)
+
+
+
+		if err := controllerutil.SetControllerReference(webHook, secret, r.Scheme); err != nil {
+			log.Error(err, "SetControllerReference error")
+		}
+
+		// Create secret
+		//log.Info("start create secret")
+		if err := r.Create(ctx, secret); err != nil {
+			log.Error(err, "create secret error")
+		}
+
+		log.Info("create secret success")
+
+		return nil
+	}
+
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query secret error")
+		return err
+	}
+
+	return nil
+}
+
+
+
+//////////////// Create configmap
+func createConfigmapIfNotExists(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "createConfigmap")
+
+	configmap := &corev1.ConfigMap{}
+
+	//query configmap if exists
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-configmap"}, configmap)
+
+
+	// No action is needed if the configmap is normal
+	if err == nil {
+		log.Info("configmap exists")
+		return nil
+	}
+
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query configmap error")
+		return err
+	}
+
+	// Instantialize the data structure
+	configmap = operator.ConfigMap(webHook)
+
+
+	// Critical step
+	// The reference guarantees that configmap will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook, configmap, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create configmap
+	log.Info("start create configmap")
+	if err := r.Create(ctx, configmap); err != nil {
+		log.Error(err, "create configmap error")
+		return err
+	}
+
+	log.Info("create configmap success")
+
+	return nil
+}
+
+
+//////////////// Create service
+func createServiceIfNotExists(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "createService")
+
+	service := &corev1.Service{}
+
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-service"}, service)
+
+	// No action is needed if the service is normal
+	if err == nil {
+		log.Info("service exists")
+		return nil
+	}
+
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query service error")
+		return err
+	}
+
+
+
+	// Instantialize the data structure
+	service = operator.Service(webHook)
+
+	// Critical step
+	// The reference guarantees that service will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook, service, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create service
+	log.Info("start create service")
+	if err := r.Create(ctx, service); err != nil {
+		log.Error(err, "create service error")
+		return err
+	}
+
+	log.Info("create service success")
+
+	return nil
+}
+
+//////////////// Create deployment
+func createDeployment(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+
+	log := r.Log.WithValues("func", "createDeployment")
+
+	deployment := &appsv1.Deployment{}
+
+	// Query with client tools
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-server"}, deployment)
+
+	// No action is needed if the service is normal
+	if err == nil {
+		log.Info("deployment exists")
+		return nil
+	}
+
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query deployment error")
+		return err
+	}
+
+	deployment = operator.Deployment(webHook)
+
+
+	// Critical step
+	// The reference guarantees that deployment will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook, deployment, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create deployment
+	log.Info("start create deployment")
+	if err := r.Create(ctx, deployment); err != nil {
+		log.Error(err, "create deployment error")
+		return err
+	}
+
+	log.Info("create deployment success")
+
+
+	// Update the status if the creation is successful
+	if err = updateStatus(ctx, r,webHook,req); err != nil {
+		log.Error(err, "error")
+	}
+
+	log.Info("updateStatus success")
+
+
+	return nil
+}
+
+
+// After processing the pod, update the latest status
+func  updateStatus(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("webhook", req.NamespacedName)
+	// Update the WebHook status with the pod names
+	// List the pods for this WebHook's deployment
+	podList := &corev1.PodList{}
+	listOpts := []client.ListOption{
+		client.InNamespace(webHook.Namespace),
+	}
+	if err := r.List(ctx, podList, listOpts...); err != nil {
+		log.Error(err, "Failed to list pods", "WebHook.Namespace", webHook.Namespace)
+		return  err
+	}
+	podNames := getPodNames(podList.Items)
+
+	// Update status.Nodes if needed
+	if !reflect.DeepEqual(podNames, webHook.Status.Nodes) {
+		webHook.Status.Nodes = podNames
+		err := r.Status().Update(ctx, webHook)
+		if err != nil {
+			log.Error(err, "Failed to update WebHook's status")
+			return  err
+		}
+	}
+
+	return nil
+}
+
+// getPodNames returns the pod names of the array of pods passed in
+func getPodNames(pods []corev1.Pod) []string {
+	var podNames []string
+	for _, pod := range pods {
+		podNames = append(podNames, pod.Name)
+	}
+	return podNames
+}
+
+
+
+//////////////// Create MutatingWebhookConfiguration
+func createMutatingWebhookConfigurationIfNotExists(ctx context.Context, r *AuditWebhookReconciler, webHook *auditv1beta1.AuditWebhook, req ctrl.Request) error {
+	log := r.Log.WithValues("func", "createMutatingWebhookConfiguration")
+
+	mc := &admissionregistrationv1beta1.MutatingWebhookConfiguration{}
+
+	//err := r.Get(ctx, req.NamespacedName, mc)
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: "audit-webhook-config"}, mc)
+
+	// No action is needed if the MC is normal
+	if err == nil {
+		log.Info("MutatingWebhookConfiguration exists")
+		return nil
+	}
+
+	// Return an error if the error is not NotFound
+	if !errors.IsNotFound(err) {
+		log.Error(err, "query MutatingWebhookConfiguration error")
+		return err
+	}
+
+	// Instantialize the data structure
+	mc = operator.MutatingWebhookConfiguration(webHook)
+
+
+
+	// Critical step
+	// The reference guarantees that MC will be deleted after the webhook is deleted
+	log.Info("set reference")
+	if err := controllerutil.SetControllerReference(webHook, mc, r.Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
+
+	// Create MutatingWebhookConfiguration
+	log.Info("start create MutatingWebhookConfiguration")
+	if err := r.Create(ctx, mc); err != nil {
+		log.Error(err, "create MutatingWebhookConfiguration error")
+		return err
+	}
+
+	log.Info("create MutatingWebhookConfiguration success")
+
+	return nil
+}
+
+
+
+
+
+
+
+//func (r *AuditWebhookReconciler) createFromYaml(instance *auditv1beta1.AuditWebhook, yamlContent []byte) error {
+//	obj := &unstructured.Unstructured{}
+//	jsonSpec, err := yaml.YAMLToJSON(yamlContent)
+//	if err != nil {
+//		return fmt.Errorf("could not convert yaml to json: %v", err)
+//	}
+//
+//	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+//		return fmt.Errorf("could not unmarshal resource: %v", err)
+//	}
+//
+//	obj.SetNamespace(instance.Namespace)
+//
+//	// Set CommonServiceConfig instance as the owner and controller
+//	if err := controllerutil.SetControllerReference(instance, obj, r.Scheme); err != nil {
+//		return err
+//	}
+//
+//	err = r.Client.Create(context.TODO(), obj)
+//	if err != nil && !errors.IsAlreadyExists(err) {
+//		return fmt.Errorf("could not Create resource: %v", err)
+//	}
+//
+//	return nil
+//}

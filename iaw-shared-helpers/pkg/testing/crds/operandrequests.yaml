@@ -1,0 +1,214 @@
+######################################################### {COPYRIGHT-TOP} ###
+# IBM Confidential
+# Automated Tests
+# Copyright IBM Corp. 2021
+######################################################### {COPYRIGHT-END} ###
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  name: operandrequests.operator.ibm.com
+  labels:
+    app.kubernetes.io/instance: operand-deployment-lifecycle-manager
+    app.kubernetes.io/managed-by: operand-deployment-lifecycle-manager
+    app.kubernetes.io/name: odlm
+spec:
+  group: operator.ibm.com
+  names:
+    plural: operandrequests
+    singular: operandrequest
+    shortNames:
+      - opreq
+    kind: OperandRequest
+    listKind: OperandRequestList
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          description: OperandRequest is the Schema for the operandrequests API
+          type: object
+          properties:
+            apiVersion:
+              description: >-
+                APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the
+                latest internal value, and may reject unrecognized values. More
+                info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: >-
+                Kind is a string value representing the REST resource this
+                object represents. Servers may infer this from the endpoint the
+                client submits requests to. Cannot be updated. In CamelCase.
+                More info:
+                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: >-
+                The OperandRequestSpec identifies one or more specific operands
+                (from a specific Registry) that should actually be installed
+              type: object
+              required:
+                - requests
+              properties:
+                requests:
+                  description: Requests defines a list of operands installation
+                  type: array
+                  items:
+                    description: Request identifies a operand detail
+                    type: object
+                    required:
+                      - operands
+                      - registry
+                    properties:
+                      description:
+                        description: Description is an optional description for the request
+                        type: string
+                      operands:
+                        description: >-
+                          Operands deines a list of the OperandRegistry entry
+                          for the operand to be deployed
+                        type: array
+                        items:
+                          description: >-
+                            Operand defines the name and binding information for
+                            one operator
+                          type: object
+                          required:
+                            - name
+                          properties:
+                            bindings:
+                              description: >-
+                                The bindings section is used to specify names of
+                                secret and/or configmap.
+                              type: object
+                              additionalProperties:
+                                description: >-
+                                  SecretConfigmap is a pair of Secret and/or
+                                  Configmap
+                                type: object
+                                properties:
+                                  configmap:
+                                    description: >-
+                                      The configmap field identifies a configmap
+                                      object, if any, that should be shared with
+                                      the adopter/requestor
+                                    type: string
+                                  secret:
+                                    description: >-
+                                      The secret field names an existing secret,
+                                      if any, that has been created and holds
+                                      information that is to be shared with the
+                                      adopter.
+                                    type: string
+                            name:
+                              description: Name of the operand to be deployed
+                              type: string
+                      registry:
+                        description: >-
+                          Specifies the name in which the OperandRegistry
+                          reside.
+                        type: string
+                      registryNamespace:
+                        description: >-
+                          Specifies the namespace in which the OperandRegistry
+                          reside. The default is the current namespace in which
+                          the request is defined.
+                        type: string
+            status:
+              description: >-
+                OperandRequestStatus defines the observed state of
+                OperandRequest
+              type: object
+              properties:
+                conditions:
+                  description: >-
+                    Conditions represents the current state of the Request
+                    Service
+                  type: array
+                  items:
+                    description: >-
+                      Condition represents the current state of the Request
+                      Service A condition might not show up if it is not
+                      happening
+                    type: object
+                    required:
+                      - status
+                      - type
+                    properties:
+                      lastTransitionTime:
+                        description: >-
+                          Last time the condition transitioned from one status
+                          to another
+                        type: string
+                      lastUpdateTime:
+                        description: The last time this condition was updated
+                        type: string
+                      message:
+                        description: >-
+                          A human readable message indicating details about the
+                          transition
+                        type: string
+                      reason:
+                        description: The reason for the condition's last transition
+                        type: string
+                      status:
+                        description: 'Status of the condition, one of True, False, Unknown'
+                        type: string
+                      type:
+                        description: Type of condition.
+                        type: string
+                members:
+                  description: Members represnets the current operand status of the set
+                  type: array
+                  items:
+                    description: MemberStatus show if the Operator is ready
+                    type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        description: The member name are the same as the subscription name
+                        type: string
+                      phase:
+                        description: >-
+                          The operand phase include None, Creating, Running,
+                          Failed
+                        type: object
+                        properties:
+                          operandPhase:
+                            description: >-
+                              OperandPhase show the deploy phase of the operator
+                              instance
+                            type: string
+                          operatorPhase:
+                            description: >-
+                              OperatorPhase show the deploy phase of the
+                              operator
+                            type: string
+                phase:
+                  description: Phase is the cluster running phase
+                  type: string
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: Phase
+          type: string
+          description: Current Phase
+          jsonPath: .status.phase
+        - name: Created At
+          type: string
+          jsonPath: .metadata.creationTimestamp
+      x-preserve-unknown-fields: true
+  conversion:
+    strategy: None

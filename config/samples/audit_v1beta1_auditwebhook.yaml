@@ -1,0 +1,16 @@
+apiVersion: audit.watson.ibm.com/v1beta1
+kind: AuditWebhook
+metadata:
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/instance: ibm-auditwebhook-operator
+    app.kubernetes.io/managed-by: ibm-auditwebhook-operator
+    app.kubernetes.io/name: ibm-auditwebhook-operator
+  name: auditwebhook-sample
+spec:
+  # Add fields here
+  dockerRegistryPrefix: "cp.stg.icr.io/cp"
+  imagePullSecrets:
+    - name: "cp.stg.icr.io"
+  license:
+    accept: true

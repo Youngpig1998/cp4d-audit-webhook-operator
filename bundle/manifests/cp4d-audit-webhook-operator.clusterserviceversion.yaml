@@ -1,0 +1,356 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "audit.watson.ibm.com/v1beta1",
+          "kind": "AuditWebhook",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/instance": "ibm-auditwebhook-operator",
+              "app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
+              "app.kubernetes.io/name": "ibm-auditwebhook-operator",
+              "control-plane": "controller-manager"
+            },
+            "name": "auditwebhook-sample"
+          },
+          "spec": {
+            "dockerRegistryPrefix": "cp.stg.icr.io/cp",
+            "imagePullSecrets": [
+              {
+                "name": "cp.stg.icr.io"
+              }
+            ],
+            "license": {
+              "accept": true
+            }
+          }
+        }
+      ]
+    capabilities: Seamless Upgrades
+    containerImage: cp.stg.icr.io/cp/opencontent-auditwebhook-operator@sha256:6ffc0b53352517f8da2d62ad6949cef0474b44cd2f506be452a1a3ece199ae72
+    description: This is the ibm-auditwebhook-operator's csv file
+    operators.operatorframework.io/builder: operator-sdk-v1.6.1+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: cp4d-audit-webhook-operator.v0.1.4
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: AuditWebhook is the Schema for the auditwebhooks API
+      displayName: Audit Webhook
+      kind: AuditWebhook
+      name: auditwebhooks.audit.watson.ibm.com
+      version: v1beta1
+  description: Operator for making logs compliant
+  displayName: Audit Webhook
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - mutatingwebhookconfigurations
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - audit.watson.ibm.com
+          resources:
+          - auditwebhooks
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - audit.watson.ibm.com
+          resources:
+          - auditwebhooks/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - audit.watson.ibm.com
+          resources:
+          - auditwebhooks/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - certmanager.k8s.io
+          resources:
+          - certificates
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - certmanager.k8s.io
+          resources:
+          - issuers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - networkpolicies
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: cp4d-audit-webhook-operator-controller-manager
+      deployments:
+      - name: cp4d-audit-webhook-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app.kubernetes.io/instance: ibm-auditwebhook-operator
+              app.kubernetes.io/managed-by: ibm-auditwebhook-operator
+              app.kubernetes.io/name: ibm-auditwebhook-operator
+              control-plane: controller-manager
+              name: ibm-auditwebhook-operator
+          strategy: {}
+          template:
+            metadata:
+              annotations:
+                cloudpakId: "86798188679816798867988679186791"
+                cloudpakName: Cloud Pak Open
+                productID: "86798188679816798867988679186791"
+                productMetric: VIRTUAL_PROCESSOR_CORE
+                productName: ibm-auditwebhook-operator
+                productVersion: 1.0.0
+              labels:
+                app.kubernetes.io/instance: ibm-auditwebhook-operator
+                app.kubernetes.io/managed-by: ibm-auditwebhook-operator
+                app.kubernetes.io/name: ibm-auditwebhook-operator
+                control-plane: controller-manager
+                intent: projected
+                name: ibm-auditwebhook-operator
+            spec:
+              affinity:
+                nodeAffinity:
+                  preferredDuringSchedulingIgnoredDuringExecution:
+                  - preference:
+                      matchExpressions:
+                      - key: beta.kubernetes.io/arch
+                        operator: In
+                        values:
+                        - amd64
+                    weight: 3
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                    - matchExpressions:
+                      - key: beta.kubernetes.io/arch
+                        operator: In
+                        values:
+                        - amd64
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                resources: {}
+              - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                command:
+                - /manager
+                image: cp.stg.icr.io/cp/opencontent-auditwebhook-operator@sha256:6ffc0b53352517f8da2d62ad6949cef0474b44cd2f506be452a1a3ece199ae72
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 300Mi
+                  requests:
+                    cpu: 100m
+                    memory: 200Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+                  privileged: false
+                  readOnlyRootFilesystem: false
+                  runAsNonRoot: true
+              imagePullSecrets:
+              - name: cp.stg.icr.io
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: cp4d-audit-webhook-operator-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          - coordination.k8s.io
+          resources:
+          - configmaps
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: cp4d-audit-webhook-operator-controller-manager
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: true
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - audit
+  - webhook
+  - logs
+  links:
+  - name: Cp4d Audit Webhook Operator
+    url: https://cp4d-audit-webhook-operator.domain
+  maturity: alpha
+  provider:
+    name: IBM
+  relatedImages:
+  - image: cp.stg.icr.io/cp/opencontent-audit-webhook@sha256:0d8c98939b31aa261d09b9f38f834cf524007cf6af1a6e02198bee115d04f918
+    name: opencontent-audit-webhook-v0.1.0
+  - image: cp.stg.icr.io/cp/watson/operators/ose-kube-rbac-proxy@sha256:ca290fbe3a0de7ac7a513322d466fd26124c56851c027430a8c1dbe2b30f21f6
+    name: ose-kube-rbac-proxy-v4.7
+  - image: cp.stg.icr.io/cp/opencontent-auditwebhook-operator@sha256:6ffc0b53352517f8da2d62ad6949cef0474b44cd2f506be452a1a3ece199ae72
+    name: opencontent-auditwebhook-operator-latest
+  - image: cp.stg.icr.io/cp/opencontent-fluentd@sha256:d71c70d59540caead90cfb46c83ebafe55787078f73e48bf12558f73b997b17e
+    name: opencontent-fluentd-ruby-ubi
+  version: 0.1.4

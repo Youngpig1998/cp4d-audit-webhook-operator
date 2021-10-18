@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/instance: ibm-auditwebhook-operator
+    app.kubernetes.io/managed-by: ibm-auditwebhook-operator
+    app.kubernetes.io/name: ibm-auditwebhook-operator
+    control-plane: controller-manager
+  name: cp4d-audit-webhook-operator-controller-manager-metrics-service
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    control-plane: controller-manager
+status:
+  loadBalancer: {}
