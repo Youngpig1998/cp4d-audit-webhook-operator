@@ -135,14 +135,9 @@ make generate
 
 通过以上这个指令 帮我们生成了相应属性所依赖的部分代码 具体细节本次分享中不必特别关注，可以参考本项目中的Makefile文件
 
-我们新建资源文件夹resources
-
-```bash
-mkdir pkg/resources
-```
 
 在文件夹internal/operator中 我们将把对于Deployment、Service、Secret、Issuer、Certificate、NetworkPolicy等等资源的逻辑具体实现
-
+在文件夹iaw-shared-helpers/pkg中 我们会对这些资源进行创建更新删除等操作
 
 
 controllers/auditwebhook_controller.go的Reconcile函数
