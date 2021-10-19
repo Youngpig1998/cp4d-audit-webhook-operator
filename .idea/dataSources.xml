@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="bundles" uuid="dac64ad9-0c62-463a-aed3-7abfafc120b5">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:C:\Users\Young\Desktop\test\张帆\cp4d-audit-webhook-operator-zen\bundles.db</jdbc-url>
+    </data-source>
+  </component>
+</project>
