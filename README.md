@@ -25,7 +25,7 @@ Operator-SDK是Operator Framework的组件之一，主要用来编写Kubernetes�
 |     操作系统     |      centos      |
 |    Golang版本    |       1.15       |
 |  Kubernetes版本  | Openshift v4.8.2 |
-| Operator-SDK版本 |      v0.18       |
+| Operator-SDK版本 |      v0.1.8      |
 
 #### 环境部署🌲
 
@@ -35,11 +35,11 @@ Operator-SDK是Operator Framework的组件之一，主要用来编写Kubernetes�
 
 ###### Kubernetes/Openshift
 
-略
+https://github.com/Youngpig1998/KuberneteCluster-built
 
 ###### Operator-SDK
 
-直接去官github官网release下载操作系统对应的版本
+直接去官方github官网release下载操作系统对应的版本
 
 我们输入以下命令可以查看operator-sdk版本
 
@@ -76,6 +76,8 @@ spec:
 
 ```bash
 mkdir cp4d-audit-webhook-operator && cd cp4d-audit-webhook-operator
+
+
 operator-sdk_linux_amd64 init --domain watson.ibm.com  --repo github.ibm.com/watson-foundation-services/cp4d-audit-webhook-operator
 cd mysql
 ```
@@ -100,7 +102,7 @@ go env|grep GOPROXY
 
 现在我们需要首先声明我们的自定义Kind的结构模式
 
-```
+```shell
 operator-sdk_linux_amd64 create api --group audit  --version v1beta1 --kind AuditWebhook --resource --controller
 ```
 
@@ -129,21 +131,26 @@ type AuditWebhookStatus struct {
 
 需要引入的包 此处不给大家罗列 因为Goland会帮大家自行添加 同时也可以参考本次分享的源码
 
+通过以下这个指令 帮我们生成了相应属性所依赖的部分代码 具体细节本次分享中不必特别关注，可以参考本项目中的Makefile文件
+
 ```bash
 make generate
 ```
 
-通过以上这个指令 帮我们生成了相应属性所依赖的部分代码 具体细节本次分享中不必特别关注，可以参考本项目中的Makefile文件
-
-我们新建资源文件夹resources
+我们新建工具包文件夹internal/operator
 
 ```bash
-mkdir pkg/resources
+mkdir internal/operator
+mkdir iaw-shared-helpers/pkg
+
+touch internal/operator/resources.go
 ```
 
-在文件夹internal/operator中 我们将把对于Deployment、Service、Secret、Issuer、Certificate、NetworkPolicy等等资源的逻辑具体实现
+在文件夹internal/operator/resources.go中，我们将把对于Deployment、Service、Secret、Issuer、Certificate、NetworkPolicy等等资源的逻辑具体实现。在iaw-shared-helpers/pkg中，我们也创建了相关的辅助函数，具体细节可参考本次分享的源码。
 
 
+
+通过执行create api命令，operator sdk会帮我们生成controllers文件夹，我们只需在里面的 [kind]_controller.go中实现我们自己的Reconcile逻辑即可。
 
 controllers/auditwebhook_controller.go的Reconcile函数
 
@@ -264,10 +271,19 @@ func (r *AuditWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 ```
 
-在编写好代码后我们再执行以下命令制作镜像，并且部署operator
+在编写好controller.go的代码后我们再执行以下命令让operator sdk生成相关文件等。
+
+```shell
+make manifests
+```
+
+### **PS：每次修改了types.go后，需要执行make generate命令，修改了controller.go后需要执行make manifests命令**
+
+
+
+执行好上述命令后便可以根据需要修改Dockerfile并且制作镜像，部署operator
 
 ```bash
-make manifests
 docker build -t {IMAGE_NAME} .
 docker push
 make deploy
@@ -279,6 +295,10 @@ make deploy
 
 https://github.com/Youngpig1998/cp4d-audit-webhook-operator
 
-#### 感谢阳明的博客🙏
+#### 参考博客🙏
 
 https://www.qikqiak.com/
+
+https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/
+
+https://xinchen.blog.csdn.net/article/details/113089414
