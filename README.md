@@ -44,10 +44,15 @@ https://github.com/Youngpig1998/KuberneteCluster-built
 我们输入以下命令可以查看operator-sdk版本
 
 ```bash
-operator-sdk_linux_amd64 version
+mv operator-sdk_linux_amd64 operator-sdk
+chmod 744 operator-sdk
+mv operator-sdk /usr/bin
+
+
+operator-sdk version
 ```
 
-
+**PS: Golang版本需要与operator-sdk版本中的go版本一致**
 
 #### 预期目标🌟
 
@@ -78,7 +83,7 @@ spec:
 mkdir cp4d-audit-webhook-operator && cd cp4d-audit-webhook-operator
 
 
-operator-sdk_linux_amd64 init --domain watson.ibm.com  --repo github.ibm.com/watson-foundation-services/cp4d-audit-webhook-operator
+operator-sdk init --domain watson.ibm.com  --repo github.ibm.com/watson-foundation-services/cp4d-audit-webhook-operator
 cd mysql
 ```
 
@@ -103,7 +108,7 @@ go env|grep GOPROXY
 现在我们需要首先声明我们的自定义Kind的结构模式
 
 ```shell
-operator-sdk_linux_amd64 create api --group audit  --version v1beta1 --kind AuditWebhook --resource --controller
+operator-sdk create api --group audit  --version v1beta1 --kind AuditWebhook --resource --controller
 ```
 
 由于我们上方所期望的yaml结构中包含dockerRegistryPrefix和imagePullSecrets两个属性，所以我们需要对它们进行声明并将逻辑实现
@@ -136,6 +141,8 @@ type AuditWebhookStatus struct {
 ```bash
 make generate
 ```
+
+其实上述命令就相当于是现在本地编译一遍，看看缺少哪些相关的依赖包，再自己使用go get命令下载即可
 
 我们新建工具包文件夹internal/operator
 
@@ -271,7 +278,7 @@ func (r *AuditWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 ```
 
-在编写好controller.go的代码后我们再执行以下命令让operator sdk生成相关文件等。
+在编写好所有的代码后我们再执行以下命令让operator sdk生成相关的config文件夹下的yaml文件。
 
 ```shell
 make manifests

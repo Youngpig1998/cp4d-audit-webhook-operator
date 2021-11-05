@@ -202,10 +202,10 @@ func Secret(secretData map[string][]byte) (string, resources.Reconcileable){
 func ConfigMap(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcileable) {
 
 	//imageName := "cp.stg.icr.io/cp/opencontent-fluentd:ruby-ubi"
-	imageName := "docker.io/fanzhan1/fluentd:test"
+	imageName := "docker.io/youngpig/fluentd:latest"
 	if len(strings.TrimSpace(webHook.Spec.DockerRegistryPrefix)) > 0 {
 		//imageName = webHook.Spec.DockerRegistryPrefix + "/opencontent-fluentd@sha256:d71c70d59540caead90cfb46c83ebafe55787078f73e48bf12558f73b997b17e"
-		imageName = webHook.Spec.DockerRegistryPrefix + "/fluentd:test"
+		imageName = webHook.Spec.DockerRegistryPrefix + "/fluentd:latest"
 	}
 
 
@@ -340,7 +340,7 @@ func Deployment(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcile
 	pIsReadOnlyRootFilesystem := &isReadOnlyRootFilesystem
 
 	//imageName := "cp.stg.icr.io/cp/opencontent-audit-webhook@sha256:0d8c98939b31aa261d09b9f38f834cf524007cf6af1a6e02198bee115d04f918"
-	imageName := "docker.io/fanzhan1/audit-webhook:v0.1.1"
+	imageName := "docker.io/youngpig/audit-webhook:v0.1.1"
 	if len(strings.TrimSpace(webHook.Spec.DockerRegistryPrefix)) > 0 {
 		//imageName = webHook.Spec.DockerRegistryPrefix + "/opencontent-audit-webhook:v0.1.0"
 		imageName = webHook.Spec.DockerRegistryPrefix + "/audit-webhook:v0.1.1"
