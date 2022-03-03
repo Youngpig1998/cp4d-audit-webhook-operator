@@ -24,8 +24,6 @@ import (
 	"strings"
 )
 
-
-
 const (
 	APP_NAME = "audit-webhook"
 	//Request CPU resource of a single pod
@@ -38,23 +36,18 @@ const (
 	MEM_LIMIT = "200Mi"
 )
 
-
 var (
-	operandRequestName = "ibm-certmanager-operators"
-	networkPolicyName = "audit-webhook-networkpolicy"
-	issuerName = "selfsigned-issuer"
-	certificateName = "serving-cert"
-	secretName = "audit-webhook-tls-secret"
-	configMapName = "audit-webhook-configmap"
-	serviceName = "audit-webhook-service"
+	operandRequestName               = "ibm-certmanager-operators"
+	networkPolicyName                = "audit-webhook-networkpolicy"
+	issuerName                       = "selfsigned-issuer"
+	certificateName                  = "serving-cert"
+	secretName                       = "audit-webhook-tls-secret"
+	configMapName                    = "audit-webhook-configmap"
+	serviceName                      = "audit-webhook-service"
 	mutatingwebhookConfigurationName = "audit-webhook-config"
-	deploymentName = "audit-webhook-server"
-	commonservices = []string{"ibm-cert-manager-operator"}
+	deploymentName                   = "audit-webhook-server"
+	commonservices                   = []string{"ibm-cert-manager-operator"}
 )
-
-
-
-
 
 func OperandRequest() (string, *odlmv1alpha1.OperandRequest) {
 	operands := []odlmv1alpha1.Operand{}
@@ -63,7 +56,7 @@ func OperandRequest() (string, *odlmv1alpha1.OperandRequest) {
 	}
 	operandRequest := &odlmv1alpha1.OperandRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   operandRequestName,
+			Name: operandRequestName,
 			Labels: map[string]string{
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
 				"app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
@@ -83,7 +76,6 @@ func OperandRequest() (string, *odlmv1alpha1.OperandRequest) {
 	return operandRequestName, operandRequest
 }
 
-
 func NetworkPolicy() (string, resources.Reconcileable) {
 
 	netProtocol := corev1.Protocol("TCP")
@@ -92,7 +84,7 @@ func NetworkPolicy() (string, resources.Reconcileable) {
 		{
 			Ports: []networkpolicy.NetworkPolicyPort{
 				{
-					Port: &intstr.IntOrString{Type: intstr.Int, IntVal: 8081},
+					Port:     &intstr.IntOrString{Type: intstr.Int, IntVal: 8081},
 					Protocol: &netProtocol,
 				},
 			},
@@ -102,7 +94,7 @@ func NetworkPolicy() (string, resources.Reconcileable) {
 
 	networkPolicy := &networkpolicy.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   networkPolicyName,
+			Name: networkPolicyName,
 			Labels: map[string]string{
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
 				"app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
@@ -113,70 +105,68 @@ func NetworkPolicy() (string, resources.Reconcileable) {
 		Spec: networkpolicy.NetworkPolicySpec{
 			PodSelector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app":   "audit-webhook",
+					"app": "audit-webhook",
 				},
 			},
-			Ingress: networkPolicyIngress,
+			Ingress:     networkPolicyIngress,
 			PolicyTypes: []networkpolicy.PolicyType{"Ingress"},
 		},
 	}
 
-	return networkPolicyName,networkpolicies.From(networkPolicy)
+	return networkPolicyName, networkpolicies.From(networkPolicy)
 }
 
-func Issuer() (string, resources.Reconcileable){
+func Issuer() (string, resources.Reconcileable) {
 
 	issuer := &certmanagerv1.Issuer{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       issuerName,
-			Labels:		map[string]string{
+			Name: issuerName,
+			Labels: map[string]string{
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
 				"app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
 				"app.kubernetes.io/name":       "ibm-auditwebhook-operator",
 			},
 		},
-		Spec:       certmanagerv1.IssuerSpec{
+		Spec: certmanagerv1.IssuerSpec{
 			IssuerConfig: certmanagerv1.IssuerConfig{
 				SelfSigned: &certmanagerv1.SelfSignedIssuer{},
 			},
 		},
 	}
 
-	return  issuerName,issuers.From(issuer)
+	return issuerName, issuers.From(issuer)
 }
 
-
-func Certificate(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcileable){
+func Certificate(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcileable) {
 
 	const dnsNameFront = "audit-webhook-service."
 	const dnsNameBack = ".svc"
 	var dnsName = dnsNameFront + webHook.Namespace + dnsNameBack
 	certificate := &certmanagerv1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       certificateName,
-			Labels:		map[string]string{
+			Name: certificateName,
+			Labels: map[string]string{
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
 				"app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
 				"app.kubernetes.io/name":       "ibm-auditwebhook-operator",
 			},
 		},
-		Spec:       certmanagerv1.CertificateSpec{
-			DNSNames:     []string{
+		Spec: certmanagerv1.CertificateSpec{
+			DNSNames: []string{
 				dnsName,
 			},
-			SecretName:   secretName,
-			IssuerRef:    certmanagerv1.ObjectReference{
-				Name:  issuerName,
-				Kind:  "Issuer",
+			SecretName: secretName,
+			IssuerRef: certmanagerv1.ObjectReference{
+				Name: issuerName,
+				Kind: "Issuer",
 			},
 		},
 	}
 
-	return certificateName,certificates.From(certificate)
+	return certificateName, certificates.From(certificate)
 }
 
-
-func Secret(secretData map[string][]byte) (string, resources.Reconcileable){
+func Secret(secretData map[string][]byte) (string, resources.Reconcileable) {
 
 	secretType := corev1.SecretTypeTLS
 
@@ -184,32 +174,30 @@ func Secret(secretData map[string][]byte) (string, resources.Reconcileable){
 		Type: secretType,
 		ObjectMeta: metav1.ObjectMeta{
 			//Namespace: webHook.Namespace,
-			Name:      secretName,
+			Name: secretName,
 			Labels: map[string]string{
-				"app": APP_NAME,
+				"app":                          APP_NAME,
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
-				"app.kubernetes.io/managed-by":  "ibm-auditwebhook-operator",
-				"app.kubernetes.io/name": "ibm-auditwebhook-operator",
+				"app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
+				"app.kubernetes.io/name":       "ibm-auditwebhook-operator",
 			},
 		},
 		Data: secretData,
 	}
 
-	return secretName,secrets.From(secret)
+	return secretName, secrets.From(secret)
 }
-
 
 func ConfigMap(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcileable) {
 
 	//imageName := "cp.stg.icr.io/cp/opencontent-fluentd:ruby-ubi"
 	imageName := "docker.io/youngpig/fluentd:latest"
+	//imageName := "quay.io/fanzhang/opencontent-fluentd:ruby-ubi-tt-1.3.0"
 	if len(strings.TrimSpace(webHook.Spec.DockerRegistryPrefix)) > 0 {
 		//imageName = webHook.Spec.DockerRegistryPrefix + "/opencontent-fluentd@sha256:d71c70d59540caead90cfb46c83ebafe55787078f73e48bf12558f73b997b17e"
 		imageName = webHook.Spec.DockerRegistryPrefix + "/fluentd:latest"
+		//imageName = webHook.Spec.DockerRegistryPrefix + "/opencontent-fluentd:ruby-ubi-tt-1.3.0"
 	}
-
-
-
 
 	volume_patch := "{\"name\":\"internal-tls\",\"secret\":{\"secretName\":\"internal-tls\",\"defaultMode\":420}}"
 	//container_patch := "{\"name\": \"sidecar\", 	\"image\": \"" + imageName + "\", 	\"securityContext\": { 		\"runAsNonRoot\": true 	}, 	\"resources\": { 		\"requests\": { 			\"memory\": \"100Mi\", 			\"cpu\": \"100m\" 		}, 		\"limits\": { 			\"memory\": \"250Mi\", 			\"cpu\": \"250m\" 		} 	}, 	\"imagePullPolicy\": \"Always\", 	\"volumeMounts\": [{ 		\"name\": \"varlog\", 		\"mountPath\": \"/var/log\" 	}, { 		\"name\": \"internal-tls\", 		\"mountPath\": \"/etc/internal-tls\" 	}], 	\"env\": [{ 		\"name\": \"NS_DOMAIN\", 		\"value\": \"https://zen-audit-svc." + webHook.Namespace + ":9880/records\" 	}] }"
@@ -218,7 +206,7 @@ func ConfigMap(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcilea
 	configmap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			//Namespace: webHook.Namespace,
-			Name:      configMapName,
+			Name: configMapName,
 			Labels: map[string]string{
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
 				"app.kubernetes.io/managed-by": "ibm-auditwebhook-operator",
@@ -231,16 +219,15 @@ func ConfigMap(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcilea
 		},
 	}
 
-	return  configMapName,configmaps.From(configmap)
+	return configMapName, configmaps.From(configmap)
 }
-
 
 func Service() (string, resources.Reconcileable) {
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			//Namespace: webHook.Namespace,
-			Name:      serviceName,
+			Name: serviceName,
 			Labels: map[string]string{
 				"app":                          APP_NAME,
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
@@ -264,7 +251,7 @@ func Service() (string, resources.Reconcileable) {
 		},
 	}
 
-	return serviceName,services.From(service)
+	return serviceName, services.From(service)
 }
 
 func MutatingWebhookConfiguration(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcileable) {
@@ -284,7 +271,7 @@ func MutatingWebhookConfiguration(webHook *auditv1beta1.AuditWebhook) (string, r
 	mc := &admissionregistrationv1beta1.MutatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			//Namespace: webHook.Namespace,
-			Name:      mutatingwebhookConfigurationName,
+			Name: mutatingwebhookConfigurationName,
 			Annotations: map[string]string{
 				"certmanager.k8s.io/inject-ca-from": certpath + "",
 			},
@@ -322,7 +309,7 @@ func MutatingWebhookConfiguration(webHook *auditv1beta1.AuditWebhook) (string, r
 		},
 	}
 
-	return mutatingwebhookConfigurationName,mutatingwebhookconfigurations.From(mc)
+	return mutatingwebhookConfigurationName, mutatingwebhookconfigurations.From(mc)
 }
 
 func Deployment(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcileable) {
@@ -341,17 +328,17 @@ func Deployment(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcile
 
 	//imageName := "cp.stg.icr.io/cp/opencontent-audit-webhook@sha256:0d8c98939b31aa261d09b9f38f834cf524007cf6af1a6e02198bee115d04f918"
 	imageName := "docker.io/youngpig/audit-webhook:v0.1.1"
+	//imageName := "quay.io/fanzhang/opencontent-audit-webhook:v0.1.3"
 	if len(strings.TrimSpace(webHook.Spec.DockerRegistryPrefix)) > 0 {
-		//imageName = webHook.Spec.DockerRegistryPrefix + "/opencontent-audit-webhook:v0.1.0"
+		//imageName = webHook.Spec.DockerRegistryPrefix + "/opencontent-audit-webhook:v0.1.3"
 		imageName = webHook.Spec.DockerRegistryPrefix + "/audit-webhook:v0.1.1"
 	}
-
 
 	// Instantialize the data structure
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			//Namespace: webHook.Namespace,
-			Name:      deploymentName,
+			Name: deploymentName,
 			Labels: map[string]string{
 				"app":                          APP_NAME,
 				"app.kubernetes.io/instance":   "ibm-auditwebhook-operator",
@@ -529,87 +516,5 @@ func Deployment(webHook *auditv1beta1.AuditWebhook) (string, resources.Reconcile
 		},
 	}
 
-
-
-	return deploymentName,deployments.From(deployment)
+	return deploymentName, deployments.From(deployment)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

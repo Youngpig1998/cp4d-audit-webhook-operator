@@ -23,9 +23,9 @@ Operator-SDK是Operator Framework的组件之一，主要用来编写Kubernetes�
 |      配置项      |     具体配置     |
 | :--------------: | :--------------: |
 |     操作系统     |      centos      |
-|    Golang版本    |       1.15       |
-|  Kubernetes版本  | Openshift v4.8.2 |
-| Operator-SDK版本 |      v0.1.8      |
+|    Golang版本    |      1.17.7      |
+|  Kubernetes版本  | Kubernetes v1.19 |
+| Operator-SDK版本 |    v0.1.18.0     |
 
 #### 环境部署🌲
 
