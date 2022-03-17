@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: cp4d-audit-webhook-catalog-name
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  # image: docker.io/ibmcom/ibm-common-service-catalog:latest
+  image: youngpig/cp4d-audit-webhook-operator-catalog:v0.0.1
+  updateStrategy:
+    registryPoll:
+      interval: 45m

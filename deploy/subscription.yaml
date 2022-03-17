@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: cp4d-audit-webhook-operator
+  namespace: zen
+  resourceVersion: "189099"
+spec:
+  channel: alpha
+  installPlanApproval: Automatic
+  name: cp4d-audit-webhook-operator
+  source: cp4d-audit-webhook-catalog-name
+  sourceNamespace: openshift-marketplace
+  startingCSV: cp4d-audit-webhook-operator.v0.0.1
+
+

@@ -23,9 +23,9 @@ Operator-SDK是Operator Framework的组件之一，主要用来编写Kubernetes�
 |      配置项      |     具体配置     |
 | :--------------: | :--------------: |
 |     操作系统     |      centos      |
-|    Golang版本    |      1.16.7      |
-|  Kubernetes版本  | Kubernetes v1.22 |
-| Operator-SDK版本 |     v0.1.12      |
+|    Golang版本    |      1.17.7      |
+|  Kubernetes版本  | Kubernetes v1.19 |
+| Operator-SDK版本 |     v1.18.0      |
 
 #### 环境部署🌲
 
@@ -97,13 +97,15 @@ export GO111MODULE=on
 export GOPROXY=https://goproxy.cn
 ```
 
-通过以下命令查看是否修改成功
+上述命令只对当前终端生效，如果切换了终端则需重新执行。通过以下命令查看是否修改成功
 
 ```sh
 go env|grep GOPROXY
 ```
 
-这个过程中会生成很多文件
+
+
+init的过程中会生成很多文件
 
 现在我们需要首先声明我们的自定义Kind的结构模式
 
@@ -292,9 +294,24 @@ make manifests
 
 ```bash
 docker build -t {IMAGE_NAME} .
-docker push
+docker push  ｛IMAGE_NAME｝
 make deploy
 ```
+
+
+
+如果还需要制作Openshift的OLM安装包的话，则需继续执行以下命令：
+
+```bash
+make bundle IMG="｛IMAGE_NAME｝"
+docker build -f bundle.Dockerfile -t {BUNDLE_IMAGE_NAME} .
+docker push {BUNDLE_IMAGE_NAME}
+make catalog-build
+```
+
+在制作catalogSource镜像之前，可以对config/manifests/bases下的clusterserviceversion yaml文件进行修改配置。
+
+
 
 
 

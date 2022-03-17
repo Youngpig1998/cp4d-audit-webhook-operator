@@ -1,0 +1,14 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  annotations:
+    olm.providedAPIs: AuditWebhook.v1beta1.audit.watson.ibm.com
+  name: webhook-og
+  namespace: placeholder
+spec:
+  targetNamespaces:
+  - placeholder
+
+
+
+
