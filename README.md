@@ -24,7 +24,7 @@ Operator-SDK是Operator Framework的组件之一，主要用来编写Kubernetes�
 | :--------------: | :--------------: |
 |     操作系统     |      centos      |
 |    Golang版本    |      1.17.7      |
-|  Kubernetes版本  | Kubernetes v1.19 |
+|  Kubernetes版本  | Kubernetes v1.20 |
 | Operator-SDK版本 |     v1.18.0      |
 
 #### 环境部署🌲
@@ -310,6 +310,14 @@ make catalog-build
 ```
 
 在制作catalogSource镜像之前，可以对config/manifests/bases下的clusterserviceversion yaml文件进行修改配置。
+
+
+
+附：可以直接通过yaml文件进行部署
+
+```shell
+kubectl apply -f deploy/all.yaml
+```
 
 
 
