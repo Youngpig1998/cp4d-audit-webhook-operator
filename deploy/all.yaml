@@ -3,13 +3,13 @@ kind: Namespace
 metadata:
   labels:
     control-plane: controller-manager
-  name: cp4d-audit-webhook-operator-system
+  name: test
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: auditwebhooks.audit.watson.ibm.com
 spec:
@@ -80,13 +80,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: cp4d-audit-webhook-operator-controller-manager
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: cp4d-audit-webhook-operator-leader-election-role
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 rules:
 - apiGroups:
   - ""
@@ -177,7 +177,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - certmanager.k8s.io
+  - cert-manager.io
   resources:
   - certificates
   verbs:
@@ -189,7 +189,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - certmanager.k8s.io
+  - cert-manager.io
   resources:
   - issuers
   verbs:
@@ -305,7 +305,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: cp4d-audit-webhook-operator-leader-election-rolebinding
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -313,7 +313,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cp4d-audit-webhook-operator-controller-manager
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -326,7 +326,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cp4d-audit-webhook-operator-controller-manager
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -339,7 +339,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cp4d-audit-webhook-operator-controller-manager
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 ---
 apiVersion: v1
 data:
@@ -358,7 +358,7 @@ data:
 kind: ConfigMap
 metadata:
   name: cp4d-audit-webhook-operator-manager-config
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 ---
 apiVersion: v1
 kind: Service
@@ -366,11 +366,12 @@ metadata:
   labels:
     control-plane: controller-manager
   name: cp4d-audit-webhook-operator-controller-manager-metrics-service
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 spec:
   ports:
   - name: https
     port: 8443
+    protocol: TCP
     targetPort: https
   selector:
     control-plane: controller-manager
@@ -381,7 +382,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: cp4d-audit-webhook-operator-controller-manager
-  namespace: cp4d-audit-webhook-operator-system
+  namespace: test
 spec:
   replicas: 1
   selector:
@@ -389,6 +390,8 @@ spec:
       control-plane: controller-manager
   template:
     metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
       labels:
         control-plane: controller-manager
     spec:
@@ -397,19 +400,27 @@ spec:
         - --secure-listen-address=0.0.0.0:8443
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
-        - --v=10
-        image: youngpig/kube-rbac-proxy:v0.5.0
+        - --v=0
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
           name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
       - args:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         command:
         - /manager
-        image: docker.io/youngpig/cp4d-audit-webhook-operator:test
+        image: youngpig/cp4d-audit-webhook-operator:NewVersion
         livenessProbe:
           httpGet:
             path: /healthz
@@ -425,11 +436,11 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 100m
-            memory: 300Mi
+            cpu: 500m
+            memory: 128Mi
           requests:
-            cpu: 100m
-            memory: 200Mi
+            cpu: 10m
+            memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
       securityContext:
